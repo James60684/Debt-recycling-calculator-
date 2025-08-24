@@ -23,24 +23,13 @@ h2{font-size:16px;margin:0 0 12px}
 .switch{gap:10px;justify-content:flex-start}
 .note{color:#667;font-size:12px;margin-top:6px}
 button{width:100%;padding:12px;font-size:16px;border:none;border-radius:10px;background:#1f6feb;color:#fff}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.small{font-size:12px;color:#667}
 .kv{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0}
 .kv strong{font-variant-numeric:tabular-nums}
 hr{border:0;border-top:1px dashed #e3e6eb;margin:10px 0}
-.badge{display:inline-block;padding:2px 8px;border-radius:100px;background:#eef2ff;color:#334;font-size:12px}
 .fine{color:#667;font-size:12px;margin-top:6px}
-
-/* New: simplified results styling */
-.headlines{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px}
-@media (min-width:560px){ .headlines{grid-template-columns:1fr 1fr 1fr} }
-.headline{background:#f0f7ff;border:1px solid #e1efff;border-radius:12px;padding:12px}
-.headline h3{margin:0 0 4px;font-size:14px;color:#234}
-.big{font-size:20px;font-weight:700;line-height:1.2}
-.good{color:#0a7a28}
-.bad{color:#b00020}
-.sectionTitle{margin:8px 0 6px;font-weight:700;font-size:14px;color:#345}
-.dim{color:#667}
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;background:#eef2ff;color:#334;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.small{font-size:12px;color:#667}
 </style>
 </head>
 <body>
@@ -94,47 +83,23 @@ hr{border:0;border-top:1px dashed #e3e6eb;margin:10px 0}
     <button id="calcBtn">Calculate</button>
   </section>
 
-  <!-- New simplified results -->
-  <section class="card" id="resultsCard" style="display:none">
-    <h2>What this means for you</h2>
-    <div class="headlines">
-      <div class="headline">
-        <h3>Loan paid off faster</h3>
-        <div class="big" id="hl_timeSaved">—</div>
-        <div class="dim">Strategy vs doing nothing extra</div>
-      </div>
-      <div class="headline">
-        <h3>Investments could grow to</h3>
-        <div class="big good" id="hl_portfolio">—</div>
-        <div class="dim">After dividend tax (growth reinvested)</div>
-      </div>
-      <div class="headline">
-        <h3>Interest saved via offset</h3>
-        <div class="big good" id="hl_offsetSaved">—</div>
-        <div class="dim">From your offset balance</div>
-      </div>
-    </div>
-
-    <div class="sectionTitle">Loan impact</div>
-    <div class="kv"><span>Home loan paid off (no strategy)</span><strong id="baselinePayoff">—</strong></div>
-    <div class="kv"><span>Home loan paid off (with strategy)</span><strong id="strategyPayoff">—</strong></div>
-    <div class="kv"><span>Time saved on the loan</span><strong id="timeSaved">—</strong></div>
-
+  <section class="card">
+    <h2>Results</h2>
+    <div class="kv"><span>Total invested (incl. equity & recycling)</span><strong id="totalInvested">—</strong></div>
+    <div class="kv"><span>Portfolio value (after dividend tax) *</span><strong id="portfolioValue">—</strong></div>
     <hr>
-    <div class="sectionTitle">Investment growth</div>
-    <div class="kv"><span>How much you’ve put in (equity + recycling)</span><strong id="totalInvested">—</strong></div>
-    <div class="kv"><span>What your investments could grow to</span><strong id="portfolioValue">—</strong></div>
-
+    <div class="kv"><span>Tax on dividends</span><strong id="divTax">—</strong></div>
+    <div class="kv"><span>Deductible invest-loan interest</span><strong id="loanInterest">—</strong></div>
+    <div class="kv"><span><span class="badge">Tax shield</span> (interest × tax rate)</span><strong id="taxShield">—</strong></div>
+    <div class="kv"><span><strong>Net tax benefit</strong> (shield − div tax)</span><strong id="netTaxBenefit">—</strong></div>
     <hr>
-    <div class="sectionTitle">Tax impact</div>
-    <div class="kv"><span>Tax you’ll pay on dividends</span><strong id="divTax">—</strong></div>
-    <div class="kv"><span>Interest you can claim as a deduction</span><strong id="loanInterest">—</strong></div>
-    <div class="kv"><span><span class="badge">Net impact of tax</span> (savings − dividend tax)</span><strong id="netTaxBenefit">—</strong></div>
-
+    <div class="kv"><span>Home loan cleared (baseline)</span><strong id="baselinePayoff">—</strong></div>
+    <div class="kv"><span>Home loan cleared (strategy)</span><strong id="strategyPayoff">—</strong></div>
+    <div class="kv"><span><strong>Time saved</strong></span><strong id="timeSaved">—</strong></div>
     <hr>
+    <div class="kv"><span>Interest saved via offset</span><strong id="offsetSaved">—</strong></div>
     <div class="kv"><span>Final offset balance</span><strong id="offsetFinal">—</strong></div>
-
-    <p class="fine" id="narrative">—</p>
+    <p class="fine">* Growth compounds inside the portfolio; dividends are taxed when paid. Dividends can be directed to extra repayment, offset, or reinvested.</p>
   </section>
 </main>
 
@@ -151,19 +116,24 @@ const TAX_BRACKETS = [
 function $(id){ return document.getElementById(id); }
 function money(x){ return x.toLocaleString("en-AU",{style:"currency",currency:"AUD",maximumFractionDigits:0}); }
 function monthsToYearsMonths(m){ const y=Math.floor(m/12), mo=m%12; return `${y}y ${mo}m`; }
-function pmt(P,r,n){ if(r===0) return P/n; return P*r/(1-Math.pow(1+r,-n)); }
+
+// Amortisation: monthly P&I payment for principal P, monthly rate r, n months
+function pmt(P, r, n){ if(r===0) return P/n; return P*r/(1-Math.pow(1+r,-n)); }
+
+// Simulate payoff given constant payment and no extras (used for baseline & tail)
 function payoffMonths(principal, mRate, standardPmt){
-  let bal=principal, m=0;
-  while(bal>0 && m<2000*12){
-    const i=bal*mRate;
-    const pay=Math.min(standardPmt, bal+i);
-    bal -= (pay - i);
+  let bal = principal, m=0;
+  while (bal>0 && m<2000*12){
+    const interest = bal*mRate;
+    const pay = Math.min(standardPmt, bal+interest);
+    bal -= (pay - interest);
     m++;
   }
   return m;
 }
+
 function populateBrackets(){
-  const sel=$("taxBracket");
+  const sel = $("taxBracket");
   TAX_BRACKETS.forEach(b=>{
     const o=document.createElement("option");
     o.value=b.rate.toString();
@@ -171,12 +141,6 @@ function populateBrackets(){
     sel.appendChild(o);
   });
   sel.value="0.30";
-}
-
-function setClassBySign(el, value){
-  el.classList.remove("good","bad");
-  if (value > 0) el.classList.add("good");
-  if (value < 0) el.classList.add("bad");
 }
 
 function run(){
@@ -195,17 +159,23 @@ function run(){
     taxRate: parseFloat($("taxBracket").value)+($("medicare").checked?0.02:0)
   };
 
+  // Monthly rates
   const mHome = inputs.homeRate/12;
   const mInvest = inputs.investRate/12;
   const mReturnTotal = Math.pow(1+inputs.expectedReturn,1/12)-1;
   const mDivYield = Math.pow(1+inputs.divYield,1/12)-1;
   const mGrowth = Math.max(mReturnTotal - mDivYield, 0);
 
+  // Baseline standard P&I payment
   const nMonthsRemaining = inputs.loanTermYears*12;
   const baselinePmt = pmt(inputs.homeLoan, mHome, nMonthsRemaining);
 
-  // Strategy simulation
-  let investLoan = 0, portfolio = 0, offset = inputs.offsetStart;
+  // ---- Strategy simulation ----
+  let investLoan = 0;
+  let portfolio = 0;
+  let offset = inputs.offsetStart;
+
+  // Initial equity draw: borrow and invest
   investLoan += inputs.equityRelease;
   portfolio  += inputs.equityRelease;
 
@@ -215,97 +185,85 @@ function run(){
   let totalDivTax = 0;
   let offsetInterestSaved = 0;
 
+  // Mortgage state for strategy
   let bal = inputs.homeLoan;
   const months = Math.min(nMonthsRemaining, inputs.years*12);
 
   for (let m=0; m<months && bal>0; m++){
+    // 1) Standard payment + user extra
     let payNow = baselinePmt + inputs.extraMonthly;
 
+    // 2) Debt recycle the user's extra: re-borrow and invest it
     if (inputs.extraMonthly>0){
       investLoan += inputs.extraMonthly;
       portfolio  += inputs.extraMonthly;
       totalInvested += inputs.extraMonthly;
     }
 
+    // 3) Investment returns
     const divCash = portfolio*mDivYield;
     const growth  = portfolio*mGrowth;
     const divTax  = divCash*inputs.taxRate;
     totalDivTax  += divTax;
     const divAfterTax = divCash - divTax;
 
-    if (inputs.divDest==="repay"){ payNow += divAfterTax; }
-    else if (inputs.divDest==="offset"){ offset += divAfterTax; }
-    else { portfolio += divAfterTax; }
-
+    // Route after-tax dividends
+    if (inputs.divDest==="repay"){
+      payNow += divAfterTax;               // reduce principal now
+    } else if (inputs.divDest==="offset"){
+      offset += divAfterTax;               // build offset balance
+    } else {
+      portfolio += divAfterTax;            // reinvest
+    }
     portfolio += growth;
 
+    // 4) Investment loan interest (deductible)
     const investInterest = investLoan*mInvest;
     totalLoanInterest += investInterest;
     totalTaxShield    += investInterest*inputs.taxRate;
 
+    // 5) Home-loan interest with offset
     const effectiveBal = Math.max(bal - offset, 0);
     const interestHome = effectiveBal*mHome;
+    // Track how much interest was saved purely by offset (vs no offset)
     const interestWithoutOffset = bal*mHome;
     offsetInterestSaved += Math.max(interestWithoutOffset - interestHome, 0);
 
+    // 6) Make mortgage payment
     const principalPaid = Math.min(payNow - interestHome, bal);
     bal -= principalPaid;
     if (bal < 0) bal = 0;
   }
 
+  // After horizon, if mortgage not cleared, continue baseline payments (no extras/divs) to finish
   const remainingMonthsAfterHorizon = payoffMonths(bal, mHome, baselinePmt);
   const strategyMonthsToZero = (bal===0 ? Math.min(nMonthsRemaining, inputs.years*12)
                                         : inputs.years*12 + remainingMonthsAfterHorizon);
+
+  // Baseline payoff (no extras, no offset, no equity/divs)
   const baselineMonthsToZero = payoffMonths(inputs.homeLoan, mHome, baselinePmt);
 
+  // Totals
   const cumulativeNetTax = totalTaxShield - totalDivTax;
-  const timeSavedMonths = Math.max(baselineMonthsToZero - strategyMonthsToZero, 0);
-
-  // Show results card
-  $("resultsCard").style.display = "block";
-
-  // Headline cards
-  $("hl_timeSaved").textContent = timeSavedMonths===0 ? "No time saved" : monthsToYearsMonths(timeSavedMonths);
-  $("hl_portfolio").textContent = money(portfolio);
-  $("hl_offsetSaved").textContent = money(offsetInterestSaved);
-  setClassBySign($("hl_offsetSaved"), offsetInterestSaved);
-
-  // Groups
-  $("baselinePayoff").textContent = monthsToYearsMonths(baselineMonthsToZero);
-  $("strategyPayoff").textContent = monthsToYearsMonths(strategyMonthsToZero);
-  $("timeSaved").textContent = timeSavedMonths===0 ? "—" : monthsToYearsMonths(timeSavedMonths);
 
   $("totalInvested").textContent  = money(totalInvested);
   $("portfolioValue").textContent = money(portfolio);
+  $("divTax").textContent         = money(totalDivTax);
+  $("loanInterest").textContent   = money(totalLoanInterest);
+  $("taxShield").textContent      = money(totalTaxShield);
+  $("netTaxBenefit").textContent  = money(cumulativeNetTax);
 
-  $("divTax").textContent       = money(totalDivTax);
-  $("loanInterest").textContent = money(totalLoanInterest);
-  $("netTaxBenefit").textContent = money(cumulativeNetTax);
-  setClassBySign($("netTaxBenefit"), cumulativeNetTax);
+  $("baselinePayoff").textContent = monthsToYearsMonths(baselineMonthsToZero);
+  $("strategyPayoff").textContent = monthsToYearsMonths(strategyMonthsToZero);
+  const timeSaved = Math.max(baselineMonthsToZero - strategyMonthsToZero, 0);
+  $("timeSaved").textContent      = timeSaved===0 ? "—" : monthsToYearsMonths(timeSaved);
 
-  $("offsetFinal").textContent  = money(offset);
-
-  // Narrative paragraph
-  const taxLine = cumulativeNetTax > 0
-    ? `Your tax position improves by around ${money(cumulativeNetTax)} (deductions outweigh dividend tax).`
-    : cumulativeNetTax < 0
-      ? `You’d pay about ${money(-cumulativeNetTax)} more in net tax (dividend tax outweighs deductions).`
-      : `Your net tax effect is roughly neutral.`;
-
-  const timeLine = timeSavedMonths>0
-    ? `With this setup, your home loan could be paid off about ${monthsToYearsMonths(timeSavedMonths)} sooner.`
-    : `This setup doesn’t shorten the loan term unless you direct more cash (extras/dividends) to the mortgage.`;
-
-  $("narrative").textContent =
-    `${timeLine} Your investments could grow to about ${money(portfolio)} over ${$("years").value} years. ${taxLine} ` +
-    `Your offset account saves approximately ${money(offsetInterestSaved)} in interest.`;
+  $("offsetSaved").textContent    = money(offsetInterestSaved);
+  $("offsetFinal").textContent    = money(offset);
 }
 
 window.addEventListener("load", ()=>{
-  // Brackets dropdown
-  const sel=$("taxBracket");
-  TAX_BRACKETS.forEach(b=>{ const o=document.createElement("option"); o.value=b.rate; o.textContent=b.label; sel.appendChild(o); });
-  sel.value="0.30";
+  populateBrackets();
   $("calcBtn").addEventListener("click", run);
 });
 </script>
