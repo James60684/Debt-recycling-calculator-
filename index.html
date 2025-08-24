@@ -187,7 +187,7 @@ function seriesBaseline(principal, mRate, standardPmt){
 }
 
 // Draw the two lines and the time-saved marker on a canvas
-function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
+function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen)function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   canvas.width = Math.floor(W * dpr);
@@ -196,78 +196,75 @@ function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,W,H);
 
-  // Axes padding
-  const padL=42, padR=10, padT=10, padB=22;
-  const plotW=W-padL-padR, plotH=H-padT-padB;
+  // More breathing room on the left/top
+  const padL = 58, padR = 12, padT = 24, padB = 26;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
 
   const maxLen = Math.max(redSeries.length, greenSeries.length);
-  const maxBal = Math.max(
-    ...redSeries.filter(x=>isFinite(x)),
-    ...greenSeries.filter(x=>isFinite(x))
-  );
+  const maxData = Math.max(...redSeries, ...greenSeries);
+  const maxY = maxData * 1.06;   // 6% headroom so lines/labels never touch the top
+  const minY = 0;
 
-  // grid (years every 12m)
+  // Grid (yearly)
   ctx.strokeStyle = "#eef1f5";
   ctx.lineWidth = 1;
-  for(let m=0;m<maxLen;m+=12){
-    const x = padL + (m/(maxLen-1))*plotW;
-    ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke();
+  for (let m = 0; m < maxLen; m += 12) {
+    const x = padL + (m / (maxLen - 1)) * plotW;
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
   }
-  // y axis labels (0 and max)
-  ctx.fillStyle="#445"; ctx.font="12px -apple-system, BlinkMacSystemFont, sans-serif";
-  ctx.textAlign="right"; ctx.textBaseline="middle";
-  ctx.fillText(money(maxBal), padL-6, padT);
-  ctx.fillText("$0", padL-6, padT+plotH);
 
-  function yFor(bal){ return padT + plotH - (bal/maxBal)*plotH; }
-  function xFor(idx){ return padL + (idx/(maxLen-1))*plotW; }
+  // Y labels (fix baseline so the top label isn't cut off)
+  ctx.fillStyle = "#445";
+  ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(money(maxData), padL - 6, padT - 2);          // top label
+  ctx.textBaseline = "bottom";
+  ctx.fillText("$0", padL - 6, padT + plotH + 2);            // bottom label
 
-  // Red line
-  ctx.strokeStyle="#d12f2f"; ctx.lineWidth=2;
+  function yFor(val){ return padT + plotH - ((val - minY) / (maxY - minY)) * plotH; }
+  function xFor(i){ return padL + (i / (maxLen - 1)) * plotW; }
+
+  // Nice rounded line caps so ends don't look chopped
+  ctx.lineCap = "round";
+
+  // Red line (baseline)
+  ctx.strokeStyle = "#d12f2f"; ctx.lineWidth = 2;
   ctx.beginPath();
-  redSeries.forEach((v,i)=>{
-    const x=xFor(i), y=yFor(v);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
+  redSeries.forEach((v,i)=>{ const x=xFor(i), y=yFor(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
 
-  // Green line
-  ctx.strokeStyle="#1a8d3a"; ctx.lineWidth=2;
+  // Green line (strategy)
+  ctx.strokeStyle = "#1a8d3a"; ctx.lineWidth = 2;
   ctx.beginPath();
-  greenSeries.forEach((v,i)=>{
-    const x=xFor(i), y=yFor(v);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
+  greenSeries.forEach((v,i)=>{ const x=xFor(i), y=yFor(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
 
   // Time-saved marker
-  if (payoffRed>payoffGreen){
+  const tag = document.getElementById('timeSavedTag');
+  if (payoffRed > payoffGreen){
     const xR = xFor(payoffRed);
     const xG = xFor(payoffGreen);
     const midY = padT + plotH - 6;
 
-    // lines
     ctx.strokeStyle="#999"; ctx.setLineDash([4,4]);
     ctx.beginPath(); ctx.moveTo(xR,padT); ctx.lineTo(xR,padT+plotH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(xG,padT); ctx.lineTo(xG,padT+plotH); ctx.stroke();
     ctx.setLineDash([]);
 
-    // bracket
     ctx.strokeStyle="#555";
     ctx.beginPath(); ctx.moveTo(xG,midY); ctx.lineTo(xR,midY); ctx.stroke();
 
-    // label
     const monthsSaved = payoffRed - payoffGreen;
-    const label = `${monthsToYearsMonths(monthsSaved)} saved`;
     ctx.fillStyle="#333"; ctx.textAlign="center"; ctx.textBaseline="bottom";
-    ctx.fillText(label, (xG+xR)/2, midY-4);
+    ctx.fillText(`${monthsToYearsMonths(monthsSaved)} saved`, (xG+xR)/2, midY-4);
 
-    // update inline tag text
-    const tag = document.getElementById('timeSavedTag');
     tag.textContent = `Time saved: ${monthsToYearsMonths(monthsSaved)}`;
   } else {
-    document.getElementById('timeSavedTag').textContent = '';
+    tag.textContent = '';
   }
+}
 }
 
 function setClassBySign(el, value){
