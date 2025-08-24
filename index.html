@@ -31,7 +31,7 @@ hr{border:0;border-top:1px dashed #e3e6eb;margin:10px 0}
 .badge{display:inline-block;padding:2px 8px;border-radius:100px;background:#eef2ff;color:#334;font-size:12px}
 .fine{color:#667;font-size:12px;margin-top:6px}
 
-/* Headlines & sections (plain-English layout) */
+/* Headlines & sections */
 .headlines{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px}
 @media (min-width:560px){ .headlines{grid-template-columns:1fr 1fr 1fr} }
 .headline{background:#f0f7ff;border:1px solid #e1efff;border-radius:12px;padding:12px}
@@ -123,7 +123,7 @@ canvas{width:100%; height:240px; display:block; border-radius:10px; background:#
       </div>
     </div>
 
-    <!-- NEW: linear chart -->
+    <!-- Chart -->
     <div class="chartWrap">
       <canvas id="loanChart" aria-label="Loan balance over time with and without debt recycling" role="img"></canvas>
       <div class="chartLegend">
@@ -167,13 +167,12 @@ const TAX_BRACKETS = [
   { label: "$190,001+ (45%)", rate: 0.45 }
 ];
 
-// Helpers
 function $(id){ return document.getElementById(id); }
 function money(x){ return x.toLocaleString("en-AU",{style:"currency",currency:"AUD",maximumFractionDigits:0}); }
 function monthsToYearsMonths(m){ const y=Math.floor(m/12), mo=m%12; return `${y}y ${mo}m`; }
 function pmt(P,r,n){ if(r===0) return P/n; return P*r/(1-Math.pow(1+r,-n)); }
 
-// Produce a month-by-month **balance series** for a plain mortgage (no extras)
+// Baseline loan series
 function seriesBaseline(principal, mRate, standardPmt){
   let bal=principal, out=[bal], m=0;
   while(bal>0 && m<2000*12){
@@ -186,7 +185,7 @@ function seriesBaseline(principal, mRate, standardPmt){
   return out;
 }
 
-// Draw the two lines and the time-saved marker on a canvas
+// --- FIXED drawChart
 function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -196,87 +195,82 @@ function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,W,H);
 
-  // Axes padding
-  const padL=42, padR=10, padT=10, padB=22;
-  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const padL = 58, padR = 12, padT = 24, padB = 26;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
 
   const maxLen = Math.max(redSeries.length, greenSeries.length);
-  const maxBal = Math.max(
-    ...redSeries.filter(x=>isFinite(x)),
-    ...greenSeries.filter(x=>isFinite(x))
-  );
+  const maxData = Math.max(...redSeries, ...greenSeries);
+  const maxY = maxData * 1.06;   // headroom
+  const minY = 0;
 
-  // grid (years every 12m)
+  // Grid (yearly)
   ctx.strokeStyle = "#eef1f5";
   ctx.lineWidth = 1;
-  for(let m=0;m<maxLen;m+=12){
-    const x = padL + (m/(maxLen-1))*plotW;
-    ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke();
+  for (let m = 0; m < maxLen; m += 12) {
+    const x = padL + (m / (maxLen - 1)) * plotW;
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
   }
-  // y axis labels (0 and max)
-  ctx.fillStyle="#445"; ctx.font="12px -apple-system, BlinkMacSystemFont, sans-serif";
-  ctx.textAlign="right"; ctx.textBaseline="middle";
-  ctx.fillText(money(maxBal), padL-6, padT);
-  ctx.fillText("$0", padL-6, padT+plotH);
 
-  function yFor(bal){ return padT + plotH - (bal/maxBal)*plotH; }
-  function xFor(idx){ return padL + (idx/(maxLen-1))*plotW; }
+  // Y labels
+  ctx.fillStyle = "#445";
+  ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(money(maxData), padL - 6, padT - 2);
+  ctx.textBaseline = "bottom";
+  ctx.fillText("$0", padL - 6, padT + plotH + 2);
+
+  function yFor(val){ return padT + plotH - ((val - minY) / (maxY - minY)) * plotH; }
+  function xFor(i){ return padL + (i / (maxLen - 1)) * plotW; }
+
+  ctx.lineCap = "round";
 
   // Red line
   ctx.strokeStyle="#d12f2f"; ctx.lineWidth=2;
   ctx.beginPath();
-  redSeries.forEach((v,i)=>{
-    const x=xFor(i), y=yFor(v);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
+  redSeries.forEach((v,i)=>{ const x=xFor(i), y=yFor(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
 
   // Green line
   ctx.strokeStyle="#1a8d3a"; ctx.lineWidth=2;
   ctx.beginPath();
-  greenSeries.forEach((v,i)=>{
-    const x=xFor(i), y=yFor(v);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
+  greenSeries.forEach((v,i)=>{ const x=xFor(i), y=yFor(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
 
   // Time-saved marker
-  if (payoffRed>payoffGreen){
+  const tag = document.getElementById('timeSavedTag');
+  if (payoffRed > payoffGreen){
     const xR = xFor(payoffRed);
     const xG = xFor(payoffGreen);
     const midY = padT + plotH - 6;
 
-    // lines
     ctx.strokeStyle="#999"; ctx.setLineDash([4,4]);
     ctx.beginPath(); ctx.moveTo(xR,padT); ctx.lineTo(xR,padT+plotH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(xG,padT); ctx.lineTo(xG,padT+plotH); ctx.stroke();
     ctx.setLineDash([]);
 
-    // bracket
     ctx.strokeStyle="#555";
     ctx.beginPath(); ctx.moveTo(xG,midY); ctx.lineTo(xR,midY); ctx.stroke();
 
-    // label
     const monthsSaved = payoffRed - payoffGreen;
-    const label = `${monthsToYearsMonths(monthsSaved)} saved`;
     ctx.fillStyle="#333"; ctx.textAlign="center"; ctx.textBaseline="bottom";
-    ctx.fillText(label, (xG+xR)/2, midY-4);
+    ctx.fillText(`${monthsToYearsMonths(monthsSaved)} saved`, (xG+xR)/2, midY-4);
 
-    // update inline tag text
-    const tag = document.getElementById('timeSavedTag');
     tag.textContent = `Time saved: ${monthsToYearsMonths(monthsSaved)}`;
   } else {
-    document.getElementById('timeSavedTag').textContent = '';
+    tag.textContent = '';
   }
 }
 
+// helper for sign styling
 function setClassBySign(el, value){
   el.classList.remove("good","bad");
   if (value > 0) el.classList.add("good");
   if (value < 0) el.classList.add("bad");
 }
 
-// Main run
+// --- Main run
 function run(){
   const inputs = {
     homeLoan: parseFloat($("homeLoan").value||"0"),
@@ -286,7 +280,7 @@ function run(){
     equityRelease: parseFloat($("equityRelease").value||"0"),
     extraMonthly: parseFloat($("extraMonthly").value||"0"),
     offsetStart: parseFloat($("offsetStart").value||"0"),
-    divDest: $("divDest").value, // repay | offset | reinvest
+    divDest: $("divDest").value,
     expectedReturn: parseFloat($("expectedReturn").value||"0")/100,
     divYield: parseFloat($("divYield").value||"0")/100,
     years: parseInt($("years").value||"10",10),
@@ -302,122 +296,11 @@ function run(){
   const nMonthsRemaining = inputs.loanTermYears*12;
   const baselinePmt = pmt(inputs.homeLoan, mHome, nMonthsRemaining);
 
-  // --- Baseline series (red)
   const baselineSeries = seriesBaseline(inputs.homeLoan, mHome, baselinePmt);
   const baselineMonthsToZero = baselineSeries.length-1;
 
-  // --- Strategy simulation (green), collecting a series of balances
-  let investLoan = 0, portfolio = 0, offset = inputs.offsetStart;
-  investLoan += inputs.equityRelease;
-  portfolio  += inputs.equityRelease;
-
-  let totalInvested = inputs.equityRelease;
-  let totalLoanInterest = 0;
-  let totalTaxShield = 0;
-  let totalDivTax = 0;
-  let offsetInterestSaved = 0;
-
+  // strategy simulation
+  let investLoan = inputs.equityRelease, portfolio = inputs.equityRelease, offset = inputs.offsetStart;
+  let totalInvested = inputs.equityRelease, totalLoanInterest = 0, totalTaxShield = 0, totalDivTax = 0, offsetInterestSaved = 0;
   let bal = inputs.homeLoan;
-  let strategySeries = [bal];
-  const months = Math.min(nMonthsRemaining, inputs.years*12);
-
-  for (let m=0; m<months && bal>0; m++){
-    let payNow = baselinePmt + inputs.extraMonthly;
-
-    if (inputs.extraMonthly>0){
-      investLoan += inputs.extraMonthly;
-      portfolio  += inputs.extraMonthly;
-      totalInvested += inputs.extraMonthly;
-    }
-
-    const divCash = portfolio*mDivYield;
-    const growth  = portfolio*mGrowth;
-    const divTax  = divCash*inputs.taxRate;
-    totalDivTax  += divTax;
-    const divAfterTax = divCash - divTax;
-
-    if (inputs.divDest==="repay"){ payNow += divAfterTax; }
-    else if (inputs.divDest==="offset"){ offset += divAfterTax; }
-    else { portfolio += divAfterTax; }
-
-    portfolio += growth;
-
-    const investInterest = investLoan*mInvest;
-    totalLoanInterest += investInterest;
-    totalTaxShield    += investInterest*inputs.taxRate;
-
-    const effectiveBal = Math.max(bal - offset, 0);
-    const interestHome = effectiveBal*mHome;
-    const interestWithoutOffset = bal*mHome;
-    offsetInterestSaved += Math.max(interestWithoutOffset - interestHome, 0);
-
-    const principalPaid = Math.min(payNow - interestHome, bal);
-    bal -= principalPaid;
-    if (bal < 0) bal = 0;
-    strategySeries.push(bal);
-  }
-
-  // If still not cleared after horizon, continue with standard repayments only (no extras/divs)
-  if (bal > 0){
-    const tail = seriesBaseline(bal, mHome, baselinePmt);
-    // drop first (duplicate starting point)
-    strategySeries = strategySeries.concat(tail.slice(1));
-  }
-  const strategyMonthsToZero = strategySeries.length-1;
-
-  // --- Totals & outputs
-  const cumulativeNetTax = totalTaxShield - totalDivTax;
-  const timeSavedMonths = Math.max(baselineMonthsToZero - strategyMonthsToZero, 0);
-
-  $("resultsCard").style.display = "block";
-  $("hl_timeSaved").textContent = timeSavedMonths===0 ? "No time saved" : monthsToYearsMonths(timeSavedMonths);
-  $("hl_portfolio").textContent = money(portfolio);
-  $("hl_offsetSaved").textContent = money(offsetInterestSaved);
-
-  $("baselinePayoff").textContent = monthsToYearsMonths(baselineMonthsToZero);
-  $("strategyPayoff").textContent = monthsToYearsMonths(strategyMonthsToZero);
-  $("timeSaved").textContent = timeSavedMonths===0 ? "—" : monthsToYearsMonths(timeSavedMonths);
-
-  $("totalInvested").textContent  = money(totalInvested);
-  $("portfolioValue").textContent = money(portfolio);
-  $("divTax").textContent       = money(totalDivTax);
-  $("loanInterest").textContent = money(totalLoanInterest);
-  $("netTaxBenefit").textContent = money(cumulativeNetTax);
-  setClassBySign($("netTaxBenefit"), cumulativeNetTax);
-  $("offsetFinal").textContent  = money(offset);
-
-  const taxLine = cumulativeNetTax > 0
-    ? `Your tax position improves by around ${money(cumulativeNetTax)}.`
-    : cumulativeNetTax < 0
-      ? `You’d pay about ${money(-cumulativeNetTax)} more in net tax.`
-      : `Your net tax effect is roughly neutral.`;
-  const timeLine = timeSavedMonths>0
-    ? `With this setup, your home loan could be paid off about ${monthsToYearsMonths(timeSavedMonths)} sooner.`
-    : `This setup doesn’t shorten the loan term unless extras/dividends go to the mortgage.`;
-  $("narrative").textContent =
-    `${timeLine} Your investments could grow to about ${money(portfolio)} over ${$("years").value} years. ` +
-    `Your offset saves about ${money(offsetInterestSaved)} in interest. ${taxLine}`;
-
-  // --- Draw chart
-  drawChart($("loanChart"), baselineSeries, strategySeries,
-            baselineMonthsToZero, strategyMonthsToZero);
-}
-
-// Init
-window.addEventListener("load", ()=>{
-  const sel=$("taxBracket");
-  TAX_BRACKETS.forEach(b=>{ const o=document.createElement("option"); o.value=b.rate; o.textContent=b.label; sel.appendChild(o); });
-  sel.value="0.30";
-  $("calcBtn").addEventListener("click", run);
-  // Redraw on resize to keep it crisp
-  window.addEventListener("resize", ()=>{
-    const canvas=$("loanChart");
-    if (canvas && $("resultsCard").style.display!=="none"){
-      // just rerun to recompute canvas size with existing data
-      $("calcBtn").click();
-    }
-  });
-});
-</script>
-</body>
-</html>
+  let strategy
