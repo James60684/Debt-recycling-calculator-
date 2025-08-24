@@ -1,179 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Debt Recycling Calculator (AU)</title>
-
-  <!-- iPhone niceties (works even without a web manifest) -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Debt Recycling AU">
-  <meta name="theme-color" content="#ffffff">
-
-  <style>
-    :root { --gap: 14px; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:#f6f7f9; color:#111; }
-    header { padding: 24px 18px 10px; }
-    h1 { margin: 0 0 6px; font-size: 22px; }
-    .muted { color:#667; margin:0; font-size: 13px; }
-    main { padding: 0 14px 40px; }
-    .card { background:#fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
-    h2 { font-size: 16px; margin:0 0 12px; }
-    .row { display:flex; gap: var(--gap); align-items:center; justify-content:space-between; margin: 10px 0; }
-    .row input, .row select { width: 48%; padding: 10px 12px; border:1px solid #d8dde6; border-radius: 10px; font-size:16px; background:#fbfcfe; }
-    .switch { gap:10px; justify-content:flex-start; }
-    .note { color:#667; font-size: 12px; margin-top: 6px; }
-    button { width:100%; padding: 12px; font-size:16px; border:none; border-radius: 10px; background:#1f6feb; color:#fff; }
-    .kv { display:flex; justify-content:space-between; align-items:baseline; margin: 8px 0; }
-    .kv strong { font-variant-numeric: tabular-nums; }
-    hr { border:0; border-top:1px dashed #e3e6eb; margin: 10px 0; }
-    .fine { color:#667; font-size:12px; margin-top:6px; }
-    footer { padding: 12px 18px 30px; color:#667; font-size:12px; }
-    .mono { font-variant-numeric: tabular-nums; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Debt Recycling Calculator (AU)</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Debt Recycling AU">
+<meta name="theme-color" content="#ffffff">
+<style>
+:root { --gap:14px; }
+*{box-sizing:border-box}
+html,body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f6f7f9;color:#111}
+header{padding:24px 18px 10px}
+h1{margin:0 0 6px;font-size:22px}
+.muted{color:#667;margin:0;font-size:13px}
+main{padding:0 14px 40px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+h2{font-size:16px;margin:0 0 12px}
+.row{display:flex;gap:var(--gap);align-items:center;justify-content:space-between;margin:10px 0}
+.row input,.row select{width:48%;padding:10px 12px;border:1px solid #d8dde6;border-radius:10px;font-size:16px;background:#fbfcfe}
+.switch{gap:10px;justify-content:flex-start}
+.note{color:#667;font-size:12px;margin-top:6px}
+button{width:100%;padding:12px;font-size:16px;border:none;border-radius:10px;background:#1f6feb;color:#fff}
+.kv{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0}
+.kv strong{font-variant-numeric:tabular-nums}
+hr{border:0;border-top:1px dashed #e3e6eb;margin:10px 0}
+.fine{color:#667;font-size:12px;margin-top:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;background:#eef2ff;color:#334;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.small{font-size:12px;color:#667}
+</style>
 </head>
 <body>
-  <header>
-    <h1>Debt Recycling (AU)</h1>
-    <p class="muted">Simple, conservative model • Not financial advice</p>
-  </header>
+<header>
+  <h1>Debt Recycling (AU)</h1>
+  <p class="muted">Simple model • Not financial advice</p>
+</header>
 
-  <main>
-    <section class="card">
-      <h2>Your marginal tax rate</h2>
-      <label class="row">
-        <span>Australian resident tax brackets (2025–26)</span>
-        <select id="taxBracket"></select>
+<main>
+  <section class="card">
+    <h2>Your marginal tax rate</h2>
+    <label class="row">
+      <span>Australian resident tax brackets (2025–26)</span>
+      <select id="taxBracket"></select>
+    </label>
+    <label class="row switch">
+      <input type="checkbox" id="medicare" checked />
+      <span>Include Medicare levy (2%)</span>
+    </label>
+    <p class="note">Brackets exclude the Medicare levy.</p>
+  </section>
+
+  <section class="card">
+    <h2>Home loan & strategy</h2>
+    <div class="grid">
+      <label><span class="small">Home loan balance</span><input id="homeLoan" type="number" inputmode="decimal" value="600000"></label>
+      <label><span class="small">Home loan rate (%)</span><input id="homeRate" type="number" inputmode="decimal" value="6.5"></label>
+      <label><span class="small">Remaining loan term (years)</span><input id="loanTerm" type="number" inputmode="numeric" value="25"></label>
+      <label><span class="small">Investment loan rate (%)</span><input id="investRate" type="number" inputmode="decimal" value="6.5"></label>
+      <label><span class="small">Initial equity released (A$)</span><input id="equityRelease" type="number" inputmode="decimal" value="0"></label>
+      <label><span class="small">Extra repayment (monthly)</span><input id="extraMonthly" type="number" inputmode="decimal" value="1000"></label>
+      <label><span class="small">Offset balance (A$)</span><input id="offsetStart" type="number" inputmode="decimal" value="0"></label>
+      <label><span class="small">Dividends destination</span>
+        <select id="divDest">
+          <option value="repay">Extra repayment</option>
+          <option value="offset">Offset account</option>
+          <option value="reinvest">Reinvest</option>
+        </select>
       </label>
-      <label class="row switch">
-        <input type="checkbox" id="medicare" checked />
-        <span>Include Medicare levy (2%)</span>
-      </label>
-      <p class="note">These brackets exclude the Medicare levy.</p>
-    </section>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>Loan & investing</h2>
-      <label class="row"><span>Home loan balance</span><input id="homeLoan" type="number" inputmode="decimal" value="600000"></label>
-      <label class="row"><span>Home loan rate</span><input id="homeRate" type="number" inputmode="decimal" value="6.5"></label>
-      <label class="row"><span>Investment loan rate</span><input id="investRate" type="number" inputmode="decimal" value="6.5"></label>
-      <label class="row"><span>Extra repayment (monthly)</span><input id="extraMonthly" type="number" inputmode="decimal" value="1000"></label>
-      <label class="row"><span>Expected return (p.a.)</span><input id="expectedReturn" type="number" inputmode="decimal" value="7"></label>
-      <label class="row"><span>Horizon (years)</span><input id="years" type="number" inputmode="numeric" value="10" min="1" max="30"></label>
-      <button id="calcBtn">Calculate</button>
-    </section>
+  <section class="card">
+    <h2>Investments</h2>
+    <div class="grid">
+      <label><span class="small">Expected total return p.a. (%)</span><input id="expectedReturn" type="number" inputmode="decimal" value="7"></label>
+      <label><span class="small">Dividend yield p.a. (%)</span><input id="divYield" type="number" inputmode="decimal" value="4"></label>
+      <label><span class="small">Horizon (years)</span><input id="years" type="number" inputmode="numeric" value="10" min="1" max="40"></label>
+    </div>
+    <p class="note">Dividends are taxable cash; growth is unrealised (no CGT until sale). Offset reduces interest by the offset balance but doesn’t reduce principal.</p>
+    <button id="calcBtn">Calculate</button>
+  </section>
 
-    <section class="card">
-      <h2>Results (simplified)</h2>
-      <div class="kv"><span>Total invested</span><strong id="totalInvested">—</strong></div>
-      <div class="kv"><span>Portfolio value (after tax on income)</span><strong id="portfolioValue">—</strong></div>
-      <hr>
-      <div class="kv"><span>Gross investment income (sum)</span><strong id="grossIncome">—</strong></div>
-      <div class="kv"><span>Tax on investment income</span><strong id="incomeTax">—</strong></div>
-      <div class="kv"><span>Deductible invest-loan interest</span><strong id="loanInterest">—</strong></div>
-      <div class="kv"><span>Tax shield from interest</span><strong id="taxShield">—</strong></div>
-      <hr>
-      <div class="kv"><span>Cumulative net tax benefit</span><strong id="netBenefit">—</strong></div>
-      <div class="kv"><span>Average annual net benefit</span><strong id="annualBenefit">—</strong></div>
-      <p class="fine">
-        Assumptions: constant rates; returns treated as fully taxable income; no franking credits or CGT discount; ignores fees/offsets/amortisation; invest immediately each month. General information only.
-      </p>
-    </section>
-  </main>
+  <section class="card">
+    <h2>Results</h2>
+    <div class="kv"><span>Total invested (incl. equity & recycling)</span><strong id="totalInvested">—</strong></div>
+    <div class="kv"><span>Portfolio value (after dividend tax) *</span><strong id="portfolioValue">—</strong></div>
+    <hr>
+    <div class="kv"><span>Tax on dividends</span><strong id="divTax">—</strong></div>
+    <div class="kv"><span>Deductible invest-loan interest</span><strong id="loanInterest">—</strong></div>
+    <div class="kv"><span><span class="badge">Tax shield</span> (interest × tax rate)</span><strong id="taxShield">—</strong></div>
+    <div class="kv"><span><strong>Net tax benefit</strong> (shield − div tax)</span><strong id="netTaxBenefit">—</strong></div>
+    <hr>
+    <div class="kv"><span>Home loan cleared (baseline)</span><strong id="baselinePayoff">—</strong></div>
+    <div class="kv"><span>Home loan cleared (strategy)</span><strong id="strategyPayoff">—</strong></div>
+    <div class="kv"><span><strong>Time saved</strong></span><strong id="timeSaved">—</strong></div>
+    <hr>
+    <div class="kv"><span>Interest saved via offset</span><strong id="offsetSaved">—</strong></div>
+    <div class="kv"><span>Final offset balance</span><strong id="offsetFinal">—</strong></div>
+    <p class="fine">* Growth compounds inside the portfolio; dividends are taxed when paid. Dividends can be directed to extra repayment, offset, or reinvested.</p>
+  </section>
+</main>
 
-  <footer>
-    Tip: After publishing on GitHub Pages, open the site in Safari → Share → <strong>Add to Home Screen</strong> for an app-like experience.
-  </footer>
+<script>
+// AU resident tax brackets 2025–26 (excl. Medicare levy)
+const TAX_BRACKETS = [
+  { label: "0 – $18,200 (0%)", rate: 0.00 },
+  { label: "$18,201 – $45,000 (16%)", rate: 0.16 },
+  { label: "$45,001 – $135,000 (30%)", rate: 0.30 },
+  { label: "$135,001 – $190,000 (37%)", rate: 0.37 },
+  { label: "$190,001+ (45%)", rate: 0.45 }
+];
 
-  <script>
-    // AU resident tax brackets 2025–26 (excl. Medicare levy)
-    const TAX_BRACKETS = [
-      { label: "0 – $18,200 (0%)", rate: 0.00, lower: 0, upper: 18200 },
-      { label: "$18,201 – $45,000 (16%)", rate: 0.16, lower: 18201, upper: 45000 },
-      { label: "$45,001 – $135,000 (30%)", rate: 0.30, lower: 45001, upper: 135000 },
-      { label: "$135,001 – $190,000 (37%)", rate: 0.37, lower: 135001, upper: 190000 },
-      { label: "$190,001+ (45%)", rate: 0.45, lower: 190001, upper: null }
-    ];
+function $(id){ return document.getElementById(id); }
+function money(x){ return x.toLocaleString("en-AU",{style:"currency",currency:"AUD",maximumFractionDigits:0}); }
+function monthsToYearsMonths(m){ const y=Math.floor(m/12), mo=m%12; return `${y}y ${mo}m`; }
 
-    function $(id){ return document.getElementById(id); }
-    function money(x){ return x.toLocaleString("en-AU", { style:"currency", currency:"AUD", maximumFractionDigits:0 }); }
+// Amortisation: monthly P&I payment for principal P, monthly rate r, n months
+function pmt(P, r, n){ if(r===0) return P/n; return P*r/(1-Math.pow(1+r,-n)); }
 
-    function populateBrackets(){
-      const sel = $("taxBracket");
-      TAX_BRACKETS.forEach((b) => {
-        const o = document.createElement("option");
-        o.value = b.rate.toString();
-        o.textContent = b.label;
-        sel.appendChild(o);
-      });
-      sel.value = "0.30"; // default 30%
+// Simulate payoff given constant payment and no extras (used for baseline & tail)
+function payoffMonths(principal, mRate, standardPmt){
+  let bal = principal, m=0;
+  while (bal>0 && m<2000*12){
+    const interest = bal*mRate;
+    const pay = Math.min(standardPmt, bal+interest);
+    bal -= (pay - interest);
+    m++;
+  }
+  return m;
+}
+
+function populateBrackets(){
+  const sel = $("taxBracket");
+  TAX_BRACKETS.forEach(b=>{
+    const o=document.createElement("option");
+    o.value=b.rate.toString();
+    o.textContent=b.label;
+    sel.appendChild(o);
+  });
+  sel.value="0.30";
+}
+
+function run(){
+  const inputs = {
+    homeLoan: parseFloat($("homeLoan").value||"0"),
+    homeRate: parseFloat($("homeRate").value||"0")/100,
+    loanTermYears: parseInt($("loanTerm").value||"25",10),
+    investRate: parseFloat($("investRate").value||"0")/100,
+    equityRelease: parseFloat($("equityRelease").value||"0"),
+    extraMonthly: parseFloat($("extraMonthly").value||"0"),
+    offsetStart: parseFloat($("offsetStart").value||"0"),
+    divDest: $("divDest").value, // repay | offset | reinvest
+    expectedReturn: parseFloat($("expectedReturn").value||"0")/100,
+    divYield: parseFloat($("divYield").value||"0")/100,
+    years: parseInt($("years").value||"10",10),
+    taxRate: parseFloat($("taxBracket").value)+($("medicare").checked?0.02:0)
+  };
+
+  // Monthly rates
+  const mHome = inputs.homeRate/12;
+  const mInvest = inputs.investRate/12;
+  const mReturnTotal = Math.pow(1+inputs.expectedReturn,1/12)-1;
+  const mDivYield = Math.pow(1+inputs.divYield,1/12)-1;
+  const mGrowth = Math.max(mReturnTotal - mDivYield, 0);
+
+  // Baseline standard P&I payment
+  const nMonthsRemaining = inputs.loanTermYears*12;
+  const baselinePmt = pmt(inputs.homeLoan, mHome, nMonthsRemaining);
+
+  // ---- Strategy simulation ----
+  let investLoan = 0;
+  let portfolio = 0;
+  let offset = inputs.offsetStart;
+
+  // Initial equity draw: borrow and invest
+  investLoan += inputs.equityRelease;
+  portfolio  += inputs.equityRelease;
+
+  let totalInvested = inputs.equityRelease;
+  let totalLoanInterest = 0;
+  let totalTaxShield = 0;
+  let totalDivTax = 0;
+  let offsetInterestSaved = 0;
+
+  // Mortgage state for strategy
+  let bal = inputs.homeLoan;
+  const months = Math.min(nMonthsRemaining, inputs.years*12);
+
+  for (let m=0; m<months && bal>0; m++){
+    // 1) Standard payment + user extra
+    let payNow = baselinePmt + inputs.extraMonthly;
+
+    // 2) Debt recycle the user's extra: re-borrow and invest it
+    if (inputs.extraMonthly>0){
+      investLoan += inputs.extraMonthly;
+      portfolio  += inputs.extraMonthly;
+      totalInvested += inputs.extraMonthly;
     }
 
-    function runModel() {
-      const inputs = {
-        homeLoanBalance: parseFloat($("homeLoan").value || "0"),
-        homeLoanRate: (parseFloat($("homeRate").value || "0") / 100),
-        investLoanRate: (parseFloat($("investRate").value || "0") / 100),
-        extraRepaymentMonthly: parseFloat($("extraMonthly").value || "0"),
-        expectedReturn: (parseFloat($("expectedReturn").value || "0") / 100),
-        years: parseInt($("years").value || "1", 10),
-        marginalRate: parseFloat($("taxBracket").value),
-        includeMedicare: $("medicare").checked
-      };
+    // 3) Investment returns
+    const divCash = portfolio*mDivYield;
+    const growth  = portfolio*mGrowth;
+    const divTax  = divCash*inputs.taxRate;
+    totalDivTax  += divTax;
+    const divAfterTax = divCash - divTax;
 
-      const months = inputs.years * 12;
-      const mInvest = inputs.investLoanRate / 12;
-      const mReturn = Math.pow(1 + inputs.expectedReturn, 1/12) - 1;
-      const taxRate = inputs.marginalRate + (inputs.includeMedicare ? 0.02 : 0);
-
-      let investLoanBalance = 0;
-      let portfolio = 0;
-
-      let totalInvested = 0;
-      let totalInvestIncomeGross = 0;
-      let totalInvestIncomeTax = 0;
-      let totalInvestInterest = 0;
-      let totalInterestTaxShield = 0;
-
-      for (let m = 0; m < months; m++) {
-        const recycleAmount = inputs.extraRepaymentMonthly;
-        investLoanBalance += recycleAmount;
-        totalInvested += recycleAmount;
-
-        portfolio += recycleAmount;
-
-        const monthlyIncome = portfolio * mReturn;
-        totalInvestIncomeGross += monthlyIncome;
-        const incomeTax = monthlyIncome * taxRate;
-        totalInvestIncomeTax += incomeTax;
-        const incomeAfterTax = monthlyIncome - incomeTax;
-        portfolio += incomeAfterTax;
-
-        const interest = investLoanBalance * mInvest;
-        totalInvestInterest += interest;
-        const taxShield = interest * taxRate;
-        totalInterestTaxShield += taxShield;
-      }
-
-      const cumulativeNetBenefit = totalInterestTaxShield - totalInvestIncomeTax;
-      const annualisedNetBenefit = cumulativeNetBenefit / inputs.years;
-
-      $("totalInvested").textContent = money(totalInvested);
-      $("portfolioValue").textContent = money(portfolio);
-      $("grossIncome").textContent = money(totalInvestIncomeGross);
-      $("incomeTax").textContent = money(totalInvestIncomeTax);
-      $("loanInterest").textContent = money(totalInvestInterest);
-      $("taxShield").textContent = money(totalInterestTaxShield);
-      $("netBenefit").textContent = money(cumulativeNetBenefit);
-      $("annualBenefit").textContent = money(annualisedNetBenefit);
+    // Route after-tax dividends
+    if (inputs.divDest==="repay"){
+      payNow += divAfterTax;               // reduce principal now
+    } else if (inputs.divDest==="offset"){
+      offset += divAfterTax;               // build offset balance
+    } else {
+      portfolio += divAfterTax;            // reinvest
     }
+    portfolio += growth;
 
-    window.addEventListener("load", () => {
-      populateBrackets();
-      $("calcBtn").addEventListener("click", runModel);
-    });
-  </script>
+    // 4) Investment loan interest (deductible)
+    const investInterest = investLoan*mInvest;
+    totalLoanInterest += investInterest;
+    totalTaxShield    += investInterest*inputs.taxRate;
+
+    // 5) Home-loan interest with offset
+    const effectiveBal = Math.max(bal - offset, 0);
+    const interestHome = effectiveBal*mHome;
+    // Track how much interest was saved purely by offset (vs no offset)
+    const interestWithoutOffset = bal*mHome;
+    offsetInterestSaved += Math.max(interestWithoutOffset - interestHome, 0);
+
+    // 6) Make mortgage payment
+    const principalPaid = Math.min(payNow - interestHome, bal);
+    bal -= principalPaid;
+    if (bal < 0) bal = 0;
+  }
+
+  // After horizon, if mortgage not cleared, continue baseline payments (no extras/divs) to finish
+  const remainingMonthsAfterHorizon = payoffMonths(bal, mHome, baselinePmt);
+  const strategyMonthsToZero = (bal===0 ? Math.min(nMonthsRemaining, inputs.years*12)
+                                        : inputs.years*12 + remainingMonthsAfterHorizon);
+
+  // Baseline payoff (no extras, no offset, no equity/divs)
+  const baselineMonthsToZero = payoffMonths(inputs.homeLoan, mHome, baselinePmt);
+
+  // Totals
+  const cumulativeNetTax = totalTaxShield - totalDivTax;
+
+  $("totalInvested").textContent  = money(totalInvested);
+  $("portfolioValue").textContent = money(portfolio);
+  $("divTax").textContent         = money(totalDivTax);
+  $("loanInterest").textContent   = money(totalLoanInterest);
+  $("taxShield").textContent      = money(totalTaxShield);
+  $("netTaxBenefit").textContent  = money(cumulativeNetTax);
+
+  $("baselinePayoff").textContent = monthsToYearsMonths(baselineMonthsToZero);
+  $("strategyPayoff").textContent = monthsToYearsMonths(strategyMonthsToZero);
+  const timeSaved = Math.max(baselineMonthsToZero - strategyMonthsToZero, 0);
+  $("timeSaved").textContent      = timeSaved===0 ? "—" : monthsToYearsMonths(timeSaved);
+
+  $("offsetSaved").textContent    = money(offsetInterestSaved);
+  $("offsetFinal").textContent    = money(offset);
+}
+
+window.addEventListener("load", ()=>{
+  populateBrackets();
+  $("calcBtn").addEventListener("click", run);
+});
+</script>
 </body>
 </html>
