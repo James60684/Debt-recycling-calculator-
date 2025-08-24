@@ -4,7 +4,23 @@
   <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d6efd">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d6efd">
 
+<!-- iOS app-like -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+
+<!-- Register the service worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js');
+    });
+  }
+</script>
 <!-- Optional larger versions -->
 <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">>
 <meta charset="utf-8" />
