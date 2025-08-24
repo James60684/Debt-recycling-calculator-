@@ -1,97 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-<head <!-- iOS app icon -->
+<head>
+  <!-- PWA / iOS -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0d6efd">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-<!-- PWA -->
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0d6efd">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Debt Recycling AU">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
 
-<!-- iOS app-like -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+  <title>Debt Recycling Calculator (AU)</title>
 
-<!-- Register the service worker -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js');
-    });
+  <!-- Service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
+
+  <style>
+  :root{
+    --blue:#1f6feb; --green:#1a8d3a; --green-200:#e7f6ec; --green-600:#0a7a28;
+    --red:#d12f2f; --red-600:#b00020;
+    --ink:#111; --muted:#667; --line:#e3e6eb; --panel:#fff; --bg:#f6f7f9;
+    --gap:14px;
   }
-</script>
-<!-- Optional larger versions -->
-<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Debt Recycling Calculator (AU)</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Debt Recycling AU">
-<meta name="theme-color" content="#ffffff">
-<style>
-:root{
-  --blue:#1f6feb; --green:#1a8d3a; --green-200:#e7f6ec; --green-600:#0a7a28;
-  --red:#d12f2f; --red-600:#b00020;
-  --ink:#111; --muted:#667; --line:#e3e6eb; --panel:#fff; --bg:#f6f7f9;
-  --gap:14px;
-}
-*{box-sizing:border-box}
-html,body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-header{padding:24px 18px 10px}
-h1{margin:0 0 6px;font-size:22px}
-.muted{color:var(--muted);margin:0;font-size:13px}
-main{padding:0 14px 40px}
-.card{background:var(--panel);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-h2{font-size:16px;margin:0 0 12px}
-.row{display:flex;gap:var(--gap);align-items:center;justify-content:space-between;margin:10px 0}
-.row input,.row select{width:48%;padding:10px 12px;border:1px solid #d8dde6;border-radius:10px;font-size:16px;background:#fbfcfe}
-.switch{gap:10px;justify-content:flex-start}
-.note{color:var(--muted);font-size:12px;margin-top:6px}
-button{width:100%;padding:12px;font-size:16px;border:none;border-radius:10px;background:var(--blue);color:#fff}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.small{font-size:12px;color:var(--muted)}
-.kv{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0}
-.kv strong{font-variant-numeric:tabular-nums}
-hr{border:0;border-top:1px dashed var(--line);margin:10px 0}
-.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;line-height:1}
-.pill-green{background:var(--green-200);color:var(--green-600)}
-.pill-grey{background:#eef2ff;color:#334}
-.num-good{color:var(--green-600)} .num-bad{color:var(--red-600)}
+  /* Dark theme (manual or system) */
+  :root[data-theme="dark"]{
+    --bg:#0e1116; --panel:#11151c; --ink:#e6e8ee; --muted:#9aa3b2; --line:#273041;
+    --blue:#3a7ff2; --green:#24b05a; --green-200:#143121; --green-600:#3fde88;
+    --red:#ff5c5c; --red-600:#ff8b8b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e1116; --panel:#11151c; --ink:#e6e8ee; --muted:#9aa3b2; --line:#273041;
+      --blue:#3a7ff2; --green:#24b05a; --green-200:#143121; --green-600:#3fde88;
+      --red:#ff5c5c; --red-600:#ff8b8b;
+    }
+  }
 
-/* Headlines */
-.headlines{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px}
-@media (min-width:560px){ .headlines{grid-template-columns:1fr 1fr 1fr} }
-.headline{background:#f0f7ff;border:1px solid #e1efff;border-radius:12px;padding:12px}
-.headline h3{margin:0 0 4px;font-size:14px;color:#234}
-.big{font-size:20px;font-weight:700;line-height:1.2}
-.sectionTitle{margin:8px 0 6px;font-weight:700;font-size:14px;color:#345}
-.dim{color:#667}
+  *{box-sizing:border-box}
+  html,body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:24px 18px 10px; position:relative;}
+  .headerBar{display:flex; align-items:center; justify-content:space-between;}
+  h1{margin:0 0 6px;font-size:22px}
+  .muted{color:var(--muted);margin:0;font-size:13px}
+  main{padding:0 14px 40px}
+  .card{background:var(--panel);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  h2{font-size:16px;margin:0 0 12px}
+  .row{display:flex;gap:var(--gap);align-items:center;justify-content:space-between;margin:10px 0}
+  .row input,.row select{width:48%;padding:10px 12px;border:1px solid #d8dde6;border-radius:10px;font-size:16px;background:#fbfcfe}
+  .switch{gap:10px;justify-content:flex-start}
+  .note{color:var(--muted);font-size:12px;margin-top:6px}
+  button{width:100%;padding:12px;font-size:16px;border:none;border-radius:10px;background:var(--blue);color:#fff}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .small{font-size:12px;color:var(--muted)}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0}
+  .kv strong{font-variant-numeric:tabular-nums}
+  hr{border:0;border-top:1px dashed var(--line);margin:10px 0}
+  .badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;line-height:1}
+  .pill-green{background:var(--green-200);color:var(--green-600)}
+  .pill-grey{background:#eef2ff;color:#334}
+  .num-good{color:var(--green-600)} .num-bad{color:var(--red-600)}
 
-/* Chart */
-.chartWrap{margin-top:12px}
-canvas{width:100%; height:240px; display:block; border-radius:10px; background:#fff}
-.chartLegend{display:flex; gap:12px; align-items:center; font-size:12px; color:#445; margin-top:6px}
-.legendDot{width:10px; height:10px; border-radius:6px; display:inline-block}
-.dotRed{background:var(--red)}
-.dotGreen{background:var(--green)}
+  /* Headlines */
+  .headlines{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px}
+  @media (min-width:560px){ .headlines{grid-template-columns:1fr 1fr 1fr} }
+  .headline{background:#f0f7ff1a;border:1px solid rgba(225,239,255,.25);border-radius:12px;padding:12px}
+  .headline h3{margin:0 0 4px;font-size:14px}
+  .big{font-size:20px;font-weight:700;line-height:1.2}
+  .sectionTitle{margin:8px 0 6px;font-weight:700;font-size:14px}
+  .dim{color:var(--muted)}
 
-/* Sliders */
-.slideRow{display:grid;grid-template-columns:120px 1fr 70px;gap:10px;align-items:center}
-input[type=range]{appearance:none;width:100%;height:6px;border-radius:6px;background:#e6ecf4;outline:none}
-input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--blue);box-shadow:0 1px 2px rgba(0,0,0,.15)}
-.help{font-size:12px;color:var(--muted);margin-top:4px}
-</style>
+  /* Chart */
+  .chartWrap{margin-top:12px}
+  canvas{width:100%; height:240px; display:block; border-radius:10px; background:var(--panel)}
+  .chartLegend{display:flex; gap:12px; align-items:center; font-size:12px; color:var(--muted); margin-top:6px}
+  .legendDot{width:10px; height:10px; border-radius:6px; display:inline-block}
+  .dotRed{background:var(--red)}
+  .dotGreen{background:var(--green)}
+
+  /* Sliders */
+  .slideRow{display:grid;grid-template-columns:120px 1fr 70px;gap:10px;align-items:center}
+  input[type=range]{appearance:none;width:100%;height:6px;border-radius:6px;background:#e6ecf4;outline:none}
+  input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--blue);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+  .help{font-size:12px;color:var(--muted);margin-top:4px}
+
+  /* Dark-mode toggle button */
+  .iconBtn{
+    border:1px solid rgba(0,0,0,.08);
+    background:var(--panel);
+    color:var(--ink);
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:16px;
+    margin-left:12px;
+  }
+  </style>
 </head>
+
 <body>
 <header>
-  <h1>Debt Recycling (AU)</h1>
-  <button id="themeToggle" class="iconBtn" aria-label="Toggle dark mode">🌙</button>
+  <div class="headerBar">
+    <h1>Debt Recycling (AU)</h1>
+    <button id="themeToggle" class="iconBtn" aria-label="Toggle dark mode">🌙</button>
+  </div>
   <p class="muted">Simple model • Not financial advice</p>
 </header>
 
 <main>
+  <!-- Tax -->
   <section class="card">
     <h2>Your marginal tax rate</h2>
     <label class="row">
@@ -105,6 +126,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;b
     <p class="note">Brackets exclude the Medicare levy.</p>
   </section>
 
+  <!-- Home loan & strategy -->
   <section class="card">
     <h2>Home loan & strategy</h2>
     <div class="grid">
@@ -125,6 +147,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;b
     </div>
   </section>
 
+  <!-- Investments -->
   <section class="card">
     <h2>Investments</h2>
     <div class="grid">
@@ -136,7 +159,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;b
     <button id="calcBtn">Calculate</button>
   </section>
 
-  <!-- NEW: What-if sliders -->
+  <!-- What-if sliders -->
   <section class="card">
     <h2>What-if sliders</h2>
     <div class="slideRow">
@@ -222,6 +245,36 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;b
 </main>
 
 <script>
+// --- Dark mode toggle (manual + system, persists)
+(function(){
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+
+  function setTheme(mode){
+    root.setAttribute('data-theme', mode); // 'light' or 'dark'
+    btn.textContent = (mode === 'dark') ? '☀️' : '🌙';
+    localStorage.setItem('theme', mode);
+    if (document.getElementById('resultsCard').style.display !== 'none') {
+      // redraw with theme colors
+      run();
+    }
+  }
+  const saved = localStorage.getItem('theme');
+  if (saved) setTheme(saved);
+  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+  else setTheme('light');
+
+  btn.addEventListener('click', ()=>{
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+  });
+
+  // follow system if user hasn't chosen manually
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e=>{
+    if (!localStorage.getItem('theme')) setTheme(e.matches ? 'dark':'light');
+  });
+})();
+
 // --- Tax brackets (2025–26, excl. Medicare levy)
 const TAX_BRACKETS = [
   { label: "0 – $18,200 (0%)", rate: 0.00 },
@@ -249,8 +302,14 @@ function seriesBaseline(principal, mRate, standardPmt){
   return out;
 }
 
-// Chart (with shaded time-saved window & headroom)
+// Chart that follows theme colors
 function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
+  const styles = getComputedStyle(document.documentElement);
+  const colGrid  = styles.getPropertyValue('--line').trim()  || "#e3e6eb";
+  const colText  = styles.getPropertyValue('--ink').trim()   || "#111";
+  const colRed   = styles.getPropertyValue('--red').trim()   || "#d12f2f";
+  const colGreen = styles.getPropertyValue('--green').trim() || "#1a8d3a";
+
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   canvas.width = Math.floor(W * dpr);
@@ -264,18 +323,17 @@ function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
 
   const maxLen = Math.max(redSeries.length, greenSeries.length);
   const maxData = Math.max(...redSeries, ...greenSeries);
-  const maxY = maxData * 1.06;
-  const minY = 0;
+  const maxY = maxData * 1.06, minY = 0;
 
   // grid (yearly)
-  ctx.strokeStyle = "#eef1f5"; ctx.lineWidth=1;
+  ctx.strokeStyle = colGrid; ctx.lineWidth=1;
   for(let m=0;m<maxLen;m+=12){
     const x = padL + (m/(maxLen-1))*plotW;
     ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke();
   }
 
   // y labels
-  ctx.fillStyle="#445"; ctx.font="12px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.fillStyle=colText; ctx.font="12px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.textAlign="right"; ctx.textBaseline="top"; ctx.fillText(money(maxData), padL-6, padT-2);
   ctx.textBaseline="bottom"; ctx.fillText("$0", padL-6, padT+plotH+2);
 
@@ -287,19 +345,17 @@ function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
   // shaded time-saved window
   if (payoffRed > payoffGreen){
     const xG=xFor(payoffGreen), xR=xFor(payoffRed);
-    ctx.fillStyle="rgba(26,141,58,0.08)";
+    ctx.fillStyle="rgba(36,176,90,0.10)";
     ctx.fillRect(xG, padT, xR-xG, plotH);
   }
 
-  // red line
-  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--red').trim() || "#d12f2f";
-  ctx.lineWidth=2; ctx.beginPath();
+  // red baseline
+  ctx.strokeStyle=colRed; ctx.lineWidth=2; ctx.beginPath();
   redSeries.forEach((v,i)=>{ const x=xFor(i), y=yFor(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
 
-  // green line
-  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--green').trim() || "#1a8d3a";
-  ctx.lineWidth=2; ctx.beginPath();
+  // green strategy
+  ctx.strokeStyle=colGreen; ctx.lineWidth=2; ctx.beginPath();
   greenSeries.forEach((v,i)=>{ const x=xFor(i), y=yFor(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
 
@@ -308,15 +364,14 @@ function drawChart(canvas, redSeries, greenSeries, payoffRed, payoffGreen){
   if (payoffRed > payoffGreen){
     const xR = xFor(payoffRed), xG = xFor(payoffGreen);
     const midY = padT + plotH - 6;
-    ctx.strokeStyle="#999"; ctx.setLineDash([4,4]);
+    ctx.strokeStyle=colGrid; ctx.setLineDash([4,4]);
     ctx.beginPath(); ctx.moveTo(xR,padT); ctx.lineTo(xR,padT+plotH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(xG,padT); ctx.lineTo(xG,padT+plotH); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.strokeStyle="#555"; ctx.beginPath(); ctx.moveTo(xG,midY); ctx.lineTo(xR,midY); ctx.stroke();
-
+    ctx.strokeStyle=colText; ctx.beginPath(); ctx.moveTo(xG,midY); ctx.lineTo(xR,midY); ctx.stroke();
     const monthsSaved = payoffRed - payoffGreen;
-    ctx.fillStyle="#333"; ctx.textAlign="center"; ctx.textBaseline="bottom";
+    ctx.fillStyle=colText; ctx.textAlign="center"; ctx.textBaseline="bottom";
     ctx.fillText(`${monthsToYearsMonths(monthsSaved)} saved`, (xG+xR)/2, midY-4);
     tag.textContent = `Time saved: ${monthsToYearsMonths(monthsSaved)}`;
   } else { tag.textContent = ''; }
@@ -452,23 +507,15 @@ function run(){
   drawChart($("loanChart"), baselineSeries, strategySeries, baselineMonthsToZero, strategyMonthsToZero);
 }
 
-// Slider helpers (sync to inputs & UI preview)
+// Slider helpers
 function bindSlider(rangeId, inputId, viewId, isMoney=false, suffix="%"){
   const r=$(rangeId), i=$(inputId), v=$(viewId);
-  const fmt = (x)=> isMoney ? money(Number(x)) : `${Number(x).toFixed(isMoney?0: (suffix==="%"?1:0))}${isMoney?"":suffix}`;
-  const push = ()=>{
-    i.value = isMoney ? Number(r.value) : Number(r.value);
-    v.value = fmt(r.value);
-  };
-  const pull = ()=>{
-    const raw = parseFloat(i.value||"0");
-    r.value = raw;
-    v.value = fmt(raw);
-  };
+  const fmt = (x)=> isMoney ? money(Number(x)) : `${Number(x).toFixed(suffix==="%"?1:0)}${isMoney?"":suffix}`;
+  const push = ()=>{ i.value = Number(r.value); v.value = fmt(r.value); };
+  const pull = ()=>{ const raw = parseFloat(i.value||"0"); r.value = raw; v.value = fmt(raw); };
   r.addEventListener("input", ()=>{ push(); });
   r.addEventListener("change", ()=>{ push(); $("calcBtn").click(); });
   i.addEventListener("change", ()=>{ pull(); $("calcBtn").click(); });
-  // init
   pull();
 }
 
@@ -488,7 +535,7 @@ window.addEventListener("load", ()=>{
   $("calcBtn").addEventListener("click", run);
 
   // Redraw on resize if results visible
-  window.addEventListener("resize", ()=>{ if ($("resultsCard").style.display!=="none") $("calcBtn").click(); });
+  window.addEventListener("resize", ()=>{ if ($("resultsCard").style.display!=="none") run(); });
 });
 </script>
 </body>
